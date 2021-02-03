@@ -129,7 +129,36 @@ node {
 }
 
 $$$$$$$$$$$$$$$$$$$$$$$$           9999999
+welcome
 
+$$$$$$$$$$$$$$$$$$$$$$$$       10 101010
+
+--->1743110-10 - Jenkins Pipeline Integrating Git And Maven - DevOps with Jenkins Pipeline, Ansible, Kubernetes _ Docker
+
+pipeline script from SCM
+
+1.) git url
+2.) creds
+3.) branch
+4.) path to script
+
+
+node{
+    stage('SCM checkout'){
+      git 'https://github.com/devopsproject7/harikammana_prj.git'
+    }
+    stage('Compile-package'){
+        sh '/opt/apache-maven-3.6.3/bin/mvn clean package'
+
+    }
+
+}
+
+
+Error: mvn not found
+
+pipeline syntax:
+------->tool: use a tool from pre-defined tool installation
 
 
 
