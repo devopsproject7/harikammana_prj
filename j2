@@ -1,0 +1,20 @@
+properties([parameters([choice(choices: ['master', 'feature-1', 'feature-2'], description: 'select brsnch to build', name: 'branch')])])
+
+node{
+    stage('SCM checkout'){
+        echo "Pulling changes from branch  ${params.branch}"
+        git branch: "${params.branch}", url: 'https://github.com/devopsproject7/harikammana_prj.git'
+
+    }
+}
+
+
+properties([parameters([choice(choices: ['master', 'hello1', 'yessss'], description: 'branch to build', name: 'branch1')])])
+
+node{
+    stage('SCM checkout'){
+        echo "Pulling changes from branch  ${params.branch1}"
+        git branch: "${params.branch1}", url: 'https://github.com/devopsproject7/hello-world'
+
+    }
+}
