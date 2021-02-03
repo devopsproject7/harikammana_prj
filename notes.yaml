@@ -244,8 +244,11 @@ install Sonarqube
 $$$$$$$$$$$$$$$$$$$$$$$$          161616
 ---->1743110-16 - Publish Source Code to SonarQube for Static Code Analysis 
 
+
 NOTE : |
         Important
+         build pass if QG pass,else fail
+
 
 
                 
