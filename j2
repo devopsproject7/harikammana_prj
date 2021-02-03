@@ -2,6 +2,7 @@ properties([parameters([choice(choices: ['master', 'feature-1', 'feature-2'], de
 
 node{
     stage('SCM checkout'){
+<<<<<<< HEAD
         echo "Pulling changes from branch  ${params.branch}"
         git branch: "${params.branch}", url: 'https://github.com/devopsproject7/harikammana_prj.git'
 
@@ -18,3 +19,10 @@ node{
 
     }
 }
+=======
+        echo "Pulling changes from branch  ${parameters.branch}"
+        git branch: "${parameters.branch}", url: 'https://github.com/devopsproject7/hello-world'
+
+    }
+}
+>>>>>>> ebd6644ab18ae7432c02e344f52dfd2c5a87b50a
