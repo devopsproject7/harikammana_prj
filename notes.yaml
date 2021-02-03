@@ -1,0 +1,145 @@
+:1  
+############ Install Java
+
+java -version
+
+sudo yum list | grep java-1.8
+java-1.8.0-openjdk.aarch64              1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-accessibility.aarch64
+java-1.8.0-openjdk-accessibility-debug.aarch64
+java-1.8.0-openjdk-debug.aarch64        1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-demo.aarch64         1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-demo-debug.aarch64   1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+###java-1.8.0-openjdk-devel.aarch64        1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core 
+java-1.8.0-openjdk-devel-debug.aarch64  1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-headless.aarch64     1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-headless-debug.aarch64
+java-1.8.0-openjdk-javadoc.noarch       1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-javadoc-debug.noarch 1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-javadoc-zip.noarch   1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-javadoc-zip-debug.noarch
+java-1.8.0-openjdk-src.aarch64          1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+java-1.8.0-openjdk-src-debug.aarch64    1:1.8.0.272.b10-1.amzn2.0.1   amzn2-core
+
+
+[ec2-user@ip-172-31-71-190 ~]$ yum install -y java-1.8.0-openjdk-devel.aarch64
+---->   Have both compiler (to build) + run time (jenkins needs run time)
+
+
+##sudo update-alternatives  --config java
+There is 1 program that provides 'java'.
+  Selection    Command
+-----------------------------------------------
+*+ 1           java-1.8.0-openjdk.aarch64 (/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.272.b10-1.amzn2.0.1.aarch64/jre/bin/java)
+
+Enter to keep the current selection[+], or type selection number: 1
+
+
+
+: 2
+## install jenkins
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+# Get repo file
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+# import key
+sudo   yum install jenkins
+sudo systemctl restart jenkins
+sudo chkconfig jenkins on
+
+
+
+$$$$$$$$$$$$$$$$$$$$$$$$ 333333333333
+
+---->Maven and git
+
+
+cd /opt
+wget https://mirrors.estointernet.in/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+tar -xvf apache-maven-3.6.3-bin.tar.gz 
+
+vim ~/.bash_profile
+export M2_HOME=/opt/apache-maven-3.6.3
+export M2=/opt/apache-maven-3.6.3/bin
+PATH=$PATH:$HOME/bin:$M2:M2_HOME
+
+echo $M2
+
+yum install -y git
+
+$$$$$$$$$$$$$$$$$$$$$$$$   444444444444
+---->CI
+$$$$$$$$$$$$$$$$$$$$$$$$     5555555555
+----> CD
+$$$$$$$$$$$$$$$$$$$$$$$$       66666666
+---->Jenkins using Maven and git
+
+New job ---myapp--freestyle
+
+git
+Build---> invoke Top-level maven targets
+        Goals: clean package
+        
+        
+Error: [my-app] $ mvn clean package
+FATAL: command execution failed
+java.io.IOException: error=2, No such file or directory
+	at java.lang.UNIXProcess.forkAndExec(Native Method)
+ 
+
+---->solution   
+ ----> Global tool config:     Name: maven-3
+                               path: /opt/apache-maven-3.6.3
+                               
+Build---> invoke Top-level maven targets  ---> ########select maven-3
+                                    
+#compile
+#resolve dep
+#run test cases
+#package it
+
+$$$$$$$$$$$$$$$$$$$$$$$$   77777777777
+####scripted Pipeline
+
+#node
+#stage
+#steps
+
+node {  
+    stage('Build') { 
+        // 
+    }
+    stage('Test') { 
+        // 
+    }
+    stage('Deploy') { 
+        // 
+    }
+}
+
+
+$$$$$$$$$$$$$$$$$$$$$$$$        888888888
+
+string  interpolation
+node {  
+    
+      def name = "hari"
+      echo "hello world!!""
+--->    echo "Welcome  ${name}"
+    
+}
+
+$$$$$$$$$$$$$$$$$$$$$$$$           9999999
+
+
+
+
+
+
+                             
+
+
+
+
+
+
+
