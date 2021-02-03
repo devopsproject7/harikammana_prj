@@ -12,7 +12,7 @@ node{
               mail bcc: '', body: '''Hi
           Welcome to Jenkins
           Hello World
-        --harish''', cc: '', from: '', replyTo: '', subject: 'Jenkins job'
+        --harish''', cc: '', from: '', replyTo: '', subject: 'Jenkins job', to: 'devopsvid07@gmail.com'
     }
 
 }
