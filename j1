@@ -3,7 +3,7 @@ node{
       git 'https://github.com/devopsproject7/harikammana_prj.git'
     }
     stage('Compile-package'){
-        sh 'mvn clean package'
+        sh '/opt/apache-maven-3.6.3/bin/mvn clean package'
 
     }
 
