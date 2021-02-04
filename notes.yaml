@@ -384,10 +384,446 @@ node {
 
 
             
+$$$$$$$$$$$$$$$$$$$$$$$$     1919191
 
+###############1743110-19 - Deploy War File to Tomcat  
+
+1.) jenkins plugin: SSH Agent  ---> To copy war files to remote machines
+2.) PP script:     ssh agent
+
+
+Note: |
+    jenkins:
+    ssh-key-gen
+    ssh-copy-id root@tomcatserver
+    Jenkins creds---> ssh with private key ---> Add jenkins private key
+    
+    
+    git checkout
+    build
+    package
+    Excute ssh agent
+    Copy war file to tomcat/webapps
+    Send slack notification
 
 
                             
+                            
+
+
+
+
+node{
+    stage('SCM checkout'){
+      git 'https://github.com/devopsproject7/hello-world.git'
+    }
+    stage('Compile-package'){
+
+        //Get maven path
+        def mvnHome= tool name: 'maven-3', type: 'maven'
+        sh "${mvnHome}/bin/mvn package"
+    }
+     stage('Deploy to tomcat'){
+         sshagent(['tomcat']) {
+
+         sh 'scp -o StrictHostKeyChecking=no webapp/target/*.war  root@172.31.16.230:/home/ec2-user/tomcat/webapps'
+         }
+     }
+  
+   stage('Email notification'){
+             slackSend baseUrl: 'https://hooks.slack.com/services/', channel: '#devops', color: 'good', message: 'Welcome to Jenkins', tokenCredentialId: 'slack'
+             
+    }
+
+}
+
+$$$$$$$$$$$$$$$$$$$$$$$$             202020202
+
+
+---->1743110-20 - Introduction to Declarative Pipelines 
+
+pipeline {
+    agent none 
+    stages {
+        stage('Example Build') {
+            agent { docker 'maven:3-alpine' } 
+            steps {
+                echo 'Hello, Maven'
+                sh 'mvn --version'
+            }
+        }
+        stage('Example Test') {
+            agent { docker 'openjdk:8-jre' } 
+            steps {
+                echo 'Hello, JDK'
+                sh 'java -version'
+            }
+        }
+    }
+}
+
+
+
+pipeline {
+    agent any  
+    stages {
+        stage("welcome") {
+            steps {
+                echo "Hello World"
+            }
+        }
+      
+    }
+}
+
+$$$$$$$$$$$$$$$$$$$$$$$$        212121
+
+---->1743110-21 - Integrating Declarative Pipelines using Git
+
+
+Declarative pipeline script incline in this case. 
+
+pipeline {
+    agent any  
+    stages {
+        stage("git checkout") {
+            steps {
+                git 'https://github.com/devopsproject7/hello-world.git'        
+             }
+        }
+      
+    }
+}
+
+Note: |
+    ### We can also pull code from src code mgmt tool ...Pipeline script from SCM
+---> does git checkout twice.No need to mention git checkout expicitly
+
+
+
+$$$$$$$$$$$$$$$$$$$$$$$$   2222222222
+1743110-22 - Using maven builds in Declarative Pipelines 
+ 
+
+
+pipeline {
+    agent any 
+     environment {      ##### we ucan use env. block in specifc stage (local to it) or at global ---Applicable to all stages
+         PATH="$PATH:/opt/apache-maven-3.6.3/bin"
+
+     } 
+
+    stages {
+        stage("git checkout") {
+            steps {
+                git 'https://github.com/devopsproject7/hello-world.git'        
+             }
+        }
+        stage("Maven Build"){
+            steps{
+                sh "mvn   package"
+            }
+
+        }
+      
+    }
+}
+
+Add maven to path
+ executes 2 stages:
+   clone
+   build
+   
+   
+$$$$$$$$$$$$$$$$$$$$$$$$ 23232323
+
+------->1743110-23 - Deploy War file to Tomcat - Declarative Pipelines -
+
+Simple CI/CD process using Declarative Pipeline:
+
+ : |
+  PP have 3stages:  Source----> Build,package ---> Deploy
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Simple CI/CD process using Declarative Pipeline on k8s
+
+nodejsapp
+
+: |
+    //Create Docker image and push to Dockerhub
+
+
+----->    //Create Docker image 
+pipeline {
+    agent any                 //pick any available agent
+    environment{               //:To use getDockerTag in multiple stages, use it in environment block
+        DOCKER_TAG = getDockerTag()
+    }
+    stages{
+        stage('Build Docker Image'){
+            steps{
+                sh "docker build . -t kammana/nodeapp:${DOCKER_TAG}"
+           //registry/name:tag.        devopsharish/nodeapp:${DOCKER_TAG}
+          // :This should be dynamic.Every time we run job  need to change version of docker image 
+         
+            }
+        }
+    }
+}
+
+def getDockerTag(){
+    def tag  = sh script: 'git rev-parse HEAD', returnStdout: true
+    return tag
+    
+    
+    // :git command to get latest commit ID.This will be always unique and new whenever code changes
+    //Store value into varible. Value returned by git command stored into tag varaible  and return it.
+} 
+
+
+--->     //push  Docker image  to Dockerhub
+
+jenkins creds---> Secret Text 
+pp syntax--->  withCredentials: Bind to Variables--->        varaible:dockerhubPWD, creds
+
+pipeline {
+    agent any                 //pick any available agent
+    environment{               //:To use getDockerTag in multiple stages, use it in environment block
+        DOCKER_TAG = getDockerTag()
+    }
+    stages{
+        stage('Build Docker Image'){
+            steps{
+                sh "docker build . -t kammana/nodeapp:${DOCKER_TAG}"
+           //registry/name:tag.        devopsharish/nodeapp:${DOCKER_TAG}
+          // :This should be dynamic.Every time we run job  need to change version of docker image 
+         
+            }
+        }
+           
+        stage('DockerHub Push'){
+         steps{
+             withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPwd')]) {
+             sh "docker login -u kammana -p ${dockerHubPwd}"
+             sh "docker push kammana/nodeapp:${DOCKER_TAG}"
+                                     //: Need to access password from this variable
+                                     //: push image to hub
+                                            
+        }
+        }
+    }
+    }
+}
+
+def getDockerTag(){
+    def tag  = sh script: 'git rev-parse HEAD', returnStdout: true
+    return tag
+    
+    
+    // :git command to get latest commit ID.This will be always unique and new whenever code changes
+    //Store value into varible. Value returned by git command stored into tag varaible  and return it.
+} 
+
+
+-----------> Pull docker images and Deploy to k8s
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodeapp
+  labels:
+    app: nodeapp
+spec:
+  containers:
+    - name: nodeapp
+      image: kammana/nodeapp:tagVersion      ### Want to dynamically change tag version every time i build
+                                             ##Ex: replace with current docker version and deploy yo k8s
+      ports:
+        - containerPort: 8080
+        
+        
+----> To chage tag dynamically ---> shell script written:)
+
+node-app/changeTag.sh
+#!/bin/bash
+sed "s/tagVersion/$1/g" pods.yml > node-app-pod.yml
+
+
+takes pods.yaml as input  and replace with latest tag
+
+
+        
+kind: Service
+apiVersion: v1
+metadata:
+  name: nodeapp
+spec:
+  selector:
+    app: nodeapp
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer                    ## create ELB in AWS
+
+
+
+
+plugin: ssh agent
+creds---> ssh with private key ---> private key for connecting to k8s
+
+pp script ---> ssh agent ---> generate script
+
+pipeline {
+    agent any
+    stages{
+        stage('Build Docker Image'){
+            steps{
+                script{
+                    def tag = latestCommitHash()
+                    sh "docker build . -t kammana/nodeapp:${tag} "
+                }
+                
+            }
+
+        }
+        stage('Push DockerHub'){
+            steps{
+                withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPwd')]) {
+                    sh "docker login -u kammana -p ${dockerHubPwd}"
+                    script{
+                        def tag = latestCommitHash()
+                        sh """
+                            docker push kammana/nodeapp:${tag}
+                            chmod +x changeTag.sh
+                            ./changeTag.sh ${tag}
+                        """
+                    }
+                }
+            }
+        }
+        stage('Deploy - Kubernetes'){
+            steps{
+                sshagent(['kops-k8s']) {
+                    sh """ 
+                       scp -o StrictHostKeyChecking=no services.yml node-app-pod.yml ec2-user@52.66.70.61:/home/ec2-user/
+                       
+                    """
+                    script{
+                        try{
+                            sh "ssh ec2-user@52.66.70.61 kubectl apply -f ."
+                        }catch(error){
+                            sh "ssh ec2-user@52.66.70.61 kubectl create -f ."
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+def latestCommitHash(){
+    def commit =  sh returnStdout: true, script: 'git rev-parse HEAD'
+    return commit
+}
+
+
+
+
+
+
+
+
+pipeline {
+    agent any                                                    
+    environment{
+        DOCKER_TAG = getDockerTag()        
+        NEXUS_URL  = "172.31.34.232:8080"
+        IMAGE_URL_WITH_TAG = "${NEXUS_URL}/node-app:${DOCKER_TAG}"     
+    }
+    stages{
+        stage('Build Docker Image'){
+            steps{
+                sh "docker build . -t ${IMAGE_URL_WITH_TAG}"          
+            }
+        }
+        stage('Nexus Push'){
+            steps{
+                withCredentials([string(credentialsId: 'nexus-pwd', variable: 'nexusPwd')]) {
+                    sh "docker login -u admin -p ${nexusPwd} ${NEXUS_URL}"
+                    sh "docker push ${IMAGE_URL_WITH_TAG}"
+                }
+            }
+        }
+        stage('Docker Deploy Dev'){
+            steps{
+                sshagent(['tomcat-dev']) {
+                    withCredentials([string(credentialsId: 'nexus-pwd', variable: 'nexusPwd')]) {
+                        sh "ssh ec2-user@172.31.0.38 docker login -u admin -p ${nexusPwd} ${NEXUS_URL}"
+                    }
+					// Remove existing container, if container name does not exists still proceed with the build
+					sh script: "ssh ec2-user@172.31.0.38 docker rm -f nodeapp",  returnStatus: true
+                    
+                    sh "ssh ec2-user@172.31.0.38 docker run -d -p 8080:8080 --name nodeapp ${IMAGE_URL_WITH_TAG}"
+                }
+            }
+        }
+    }
+}
+
+def getDockerTag(){
+    def tag  = sh script: 'git rev-parse HEAD', returnStdout: true
+    return tag                                        
+    
+    // :git command to get latest commit ID.This will be always unique and new whenever code changes
+    //Store value into varible. Value returned by git command stored into tag varaible  and return it.
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+########jenkins linter example
+
+pipeline{
+    agent any
+    stages{
+        steps{
+            script{
+                def name = "harish balusu"    //If we use groovy synta, should keep in script block
+            }
+
+        }
+ }
+
+ }
+
+
+
+
+
+
+
+
+
+
 
 
 

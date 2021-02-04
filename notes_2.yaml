@@ -1,0 +1,277 @@
+pipeline {
+    agent any
+     tools {                    //Usually comes out of stages block
+        maven 'maven-3'         //This incudes maven binary to PATH..So we can use mvn directly using shell
+    }
+    stages{
+        stage('Git checkout'){
+            steps{
+                git 'https://github.com/devopsproject7/harikammana_newdevops.git' 
+            }
+        }
+        stage('Build'){
+            steps{
+                 sh 'mvn package'
+            }
+        }
+    
+
+
+
+    }
+}
+
+
+###nexus
+
+sudo yum list | grep java-1.8
+yum install -y java-1.8.0-openjdk-devel.aarch64
+
+----> SEARCH   sonatype nexus repository manager version  3
+
+https://help.sonatype.com/repomanager3/download
+
+
+RUN-AS-A-SERVICE
+https://help.sonatype.com/repomanager3/installation/run-as-a-service
+
+
+cd /opt
+ wget https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+ tar -xvf latest-unix.tar.gz
+ chown -R ec2-user:ec2-user nexus-3.29.2-02
+ cd nexus-3.29.2-02/bin/
+ vim nexus.rc 
+ 
+
+ sudo ln -s /opt/nexus-3.29.2-02/bin/nexus /etc/init.d/nexus
+ cd /etc/init.d
+ sudo chkconfig --add nexus
+ sudo chkconfig --levels 345 nexus on
+ sudo service nexus start
+ sudo service nexus status
+ 
+ IP:8081
+ 
+ 
+ 
+ ######################4
+ 
+ 
+ 
+ 
+ Configuration--> repositories---> create repo   ---> maven (hosted)
+                                                Name: | 
+                                                  Name:
+                                                  type: release or snapshot
+                                                  
+ 
+ Plugin: Nexus Artifact Uploader
+ 
+ PP syntax: ---> Nexus Artifact Uploader---> 
+    Name: |
+    Nexus url: 
+    groupid, version, 
+    Location where artifacts will be genrated:   target/webapp.war
+ 
+ 
+
+
+pipeline {
+    agent any
+    tools {
+        maven 'maven3'
+    }
+    stages{
+        stage('Build'){
+            steps{
+                 sh script: 'mvn clean package'
+            }
+        }
+        stage('Upload War To Nexus'){
+            steps{
+                 nexusArtifactUploader artifacts: [
+                     [
+                         artifactId: 'simple-app', 
+                         classifier: '', 
+                         file: 'target/simple-app-1.0.0.war', 
+                         type: 'war'
+                    ]
+                ], 
+                credentialsId: 'nexus3', 
+                groupId: 'in.javahome', 
+                nexusUrl: '172.31.15.204:8081', 
+                nexusVersion: 'nexus3', 
+                protocol: 'http', 
+                repository: 'simpleapp-release', 
+                version: '1.0.0'
+            }
+        }
+    }
+}
+
+############################################33555555555555555555555555555555555555555
+ read version from maven pom file
+How to get values dynamically from pom.xml??
+
+Ex; Version changes from 1.0 to 2.0
+
+
+Plugin: Pipeline utility  steps
+(utility plugin))
+
+Google : Pipeline utility  jenkins---> readMavenPom
+
+Whenever there is change in version, dynamically script takes same wart file and uploads to nexus
+
+pipeline {
+    agent any
+    tools {
+        maven 'maven3'
+    }
+    stages{
+        stage('Build'){
+            steps{
+                 sh script: 'mvn clean package'
+            }
+        }
+        stage('Upload War To Nexus'){
+            steps{
+                def mavenPom = readMavenPom 'pom.xml'   //Declare varibale 
+                 nexusArtifactUploader artifacts: [
+                     [
+                         artifactId: 'simple-app', 
+                         classifier: '', 
+                         file: "target/simple-app-${mavenPom.version}.war",  //Access version from pom.xml
+                         type: 'war'
+                    ]
+                ], 
+                credentialsId: 'nexus3', 
+                groupId: 'in.javahome', 
+                nexusUrl: '172.31.15.204:8081', 
+                nexusVersion: 'nexus3', 
+                protocol: 'http', 
+                repository: 'simpleapp-release', 
+                version: "${mavenPom.version}"  //Access version from pom.xml
+            }
+        }
+    }
+}
+
+
+
+
+pipeline {
+    agent any
+    tools {
+        maven 'maven3'
+    }
+    stages{
+        stage('Build'){
+            steps{
+                 sh script: 'mvn clean package'
+            }
+        }
+        stage('Upload War To Nexus'){
+            steps{
+                script{
+                 def mavenPom = readMavenPom 'pom.xml'               // We should add in script block
+                 nexusArtifactUploader artifacts: [
+                     [
+                         artifactId: 'simple-app', 
+                         classifier: '', 
+                         file: "target/simple-app-${mavenPom.version}.war", 
+                         type: 'war'
+                    ]
+                ], 
+                credentialsId: 'nexus3', 
+                groupId: 'in.javahome', 
+                nexusUrl: '172.31.15.204:8081', 
+                nexusVersion: 'nexus3', 
+                protocol: 'http', 
+                repository: 'simpleapp-release', 
+                version: "${mavenPom.version}"
+                }
+            }
+        }
+    }
+}
+
+
+############################
+6_DevOps CI CD   Jenkins Code to Dynamically Choose Snapshot Or Release  Jenkins Pipeline Tutorial
+
+---->We are able to push artifacts into  Nexus, but not able to segregate them into RELEASE AND SNAPSHOT
+
+
+Snaphot: any version ending with snapshot --->snapshot version
+   Snapshot means currently in Development
+   Snapshot extension to version: Ready to release 
+   
+  Release---> 
+  
+  If any buxes, going to fixed in next version, but not in same version.
+  
+  
+In we push same version in devops, it will reject and Build get failed
+When sprint is active, and NEw feature added by different developers..
+
+Ex: if we are starting new sprint 3.0   
+version: 3.0
+When we get new sprint, mark it as SNAPSHOT
+version: 3.0-SNapshot bcz if we dont mark as snapshot, and if build same version 3.0--3 or 4 times, it WILL ACTUALLY LAND TO RELEASE VERSION.  
+
+
+pipeline {
+    agent any
+    tools {
+        maven 'maven3'
+    }
+    options {
+        buildDiscarder logRotator(daysToKeepStr: '5', numToKeepStr: '7')
+    }
+    stages{
+        stage('Build'){
+            steps{
+                 sh script: 'mvn clean package'
+                 archiveArtifacts artifacts: 'target/*.war', onlyIfSuccessful: true
+            }
+        }
+        stage('Upload War To Nexus'){
+            steps{
+                script{
+
+                    def mavenPom = readMavenPom file: 'pom.xml'
+                    def nexusRepoName = mavenPom.version.endsWith("SNAPSHOT") ? "simpleapp-snapshot" : "simpleapp-release"
+                    nexusArtifactUploader artifacts: [
+                        [
+                            artifactId: 'simple-app', 
+                            classifier: '', 
+                            file: "target/simple-app-${mavenPom.version}.war", 
+                            type: 'war'
+                        ]
+                    ], 
+                    credentialsId: 'nexus3', 
+                    groupId: 'in.javahome', 
+                    nexusUrl: '172.31.15.204:8081', 
+                    nexusVersion: 'nexus3', 
+                    protocol: 'http', 
+                    repository: nexusRepoName, 
+                    version: "${mavenPom.version}"
+                    }
+            }
+        }
+    }
+}
+
+
+
+#######################
+Discard old builds
+
+save disk space  and presvent from crashing
+
+pp syntax---> Declarative Generator--- > options: Discard Old builds 
+                   log rotation:  no.of days to keep  : 5
+            
+                                  Max. no of builds : 10

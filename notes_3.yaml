@@ -1,0 +1,84 @@
+: 1
+Ansible
+
+Install patches on 100's of servers
+Deploy war  file on 100's of apache or webservers
+Install/configure some pkg on 100-100s of servers
+
+: 2
+Agentless ..Not require like chef,puppet
+Simpel and easy to use
+
+
+: 3
+Ingegrate Ansible and jenkins
+
+--->Execute ansible pb from jenkins????
+
+javahometech/myapp-ansible
+
+
+1.) On Jenkins  ((CONTROLLED NODE, MASTER))
+2. Install ansible 
+3. Plugin: Ansible
+4. Global tool config:   Name:
+					   path: which ansible
+	
+    
+New job---> pp
+    pp synatx--> ansibleplaybook: Invoke pb
+	
+	playbook.yml
+	hosts file
+	ON which servers to execute--Group?
+	privater key
+	Disbale host key checks
+    
+: 4
+Ansible tags
+If we want to run only specific tasks in playbook
+
+
+Eventhough Ansible is idempodent(even if we run same pb N times..No side effects)
+ To save time, to run only specific tasks in playbook
+ ---> TO REDUCE EXECUTION TIME
+ 
+ 
+ ansible-playbook  --tags=install         ---> Run install  task 
+ ansible-playbook  --tags=install,start     --> Run install  task  and install
+ ansible-playbook  --skip-tags=install        ---> Run all task except install 
+ 
+
+
+
+
+
+
+
+
+-----------> DevOps Setting up docker private registry Install Nexus Java Home
+
+
+1.) Create reposiory--->Docker hosted
+2.) Install Docker---try to push and pull images
+
+
+a.) /etc/docker/daemon.json
+{
+ "insecure-registries: [nexus url, port ],"
+ "disbale-legacy-registry: true"
+}
+
+b.) restart docker
+
+
+c.) docker login -u admin -p admin@123 nexusip:port
+
+
+docker pull alpine:latest
+docker tag alpine:latest nexusip:port/alpine:1.0
+
+docker push nexusip:port/alpine:1.0
+
+
+ 
