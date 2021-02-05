@@ -1,0 +1,15 @@
+pipeline{
+   agent any
+   stages{
+    stage("SCM checkout "){
+        steps{
+            echo "Hello world!!"
+            git branch: ' master', url: 'https://github.com/devopsproject7/harikammana_prj.git'
+        }
+    }
+
+
+
+
+   }
+}

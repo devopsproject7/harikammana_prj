@@ -1,3 +1,6 @@
+scripted---> node---> stages---> steps
+Declarative  --->  pipeleine--->  agent---> stages--> stage---> steps
+
 :1  
 ############ Install Java
 
@@ -47,7 +50,7 @@ sudo systemctl restart jenkins
 sudo chkconfig jenkins on
 
 
-
+: 3
 $$$$$$$$$$$$$$$$$$$$$$$$ 333333333333
 
 ---->Maven and git
@@ -73,11 +76,13 @@ $$$$$$$$$$$$$$$$$$$$$$$$     5555555555
 $$$$$$$$$$$$$$$$$$$$$$$$       66666666
 ---->Jenkins using Maven and git
 
+##take code from git, compile, test, pkg it
+
 New job ---myapp--freestyle
 
 git
 Build---> invoke Top-level maven targets
-        Goals: clean package
+          Goals: clean package
         
         
 Error: [my-app] $ mvn clean package
@@ -91,13 +96,15 @@ java.io.IOException: error=2, No such file or directory
                                path: /opt/apache-maven-3.6.3
                                
 Build---> invoke Top-level maven targets  ---> ########select maven-3
-                                    
+
+#get code                                    
 #compile
 #resolve dep
 #run test cases
 #package it
 
 $$$$$$$$$$$$$$$$$$$$$$$$   77777777777
+: 7
 ####scripted Pipeline
 
 #node
@@ -118,29 +125,30 @@ node {
 
 
 $$$$$$$$$$$$$$$$$$$$$$$$        888888888
-
+: 8
 string  interpolation
 node {  
     
-      def name = "hari"
+      def name = "harish balusu"
       echo "hello world!!""
 --->    echo "Welcome  ${name}"
     
 }
 
 $$$$$$$$$$$$$$$$$$$$$$$$           9999999
+: 9
 welcome
 
 $$$$$$$$$$$$$$$$$$$$$$$$       10 101010
 
---->1743110-10 - Jenkins Pipeline Integrating Git And Maven - DevOps with Jenkins Pipeline, Ansible, Kubernetes _ Docker
-
+--->1743110-10 - Jenkins Pipeline Integrating Git And Maven 
+: 10
 pipeline script from SCM
 
 1.) git url
 2.) creds
 3.) branch
-4.) path to script
+4.) path to script    ( BY DEFUALT Looks at project root-dir)
 
 
 node{
@@ -161,24 +169,31 @@ pipeline syntax:
 ------->tool: use a tool from pre-defined tool installation
 
 node{
-    stage('SCM checkout'){
-      git 'https://github.com/devopsproject7/harikammana_prj.git'
-    }
-    stage('Compile-package'){
+    stage('SCM Checkout'){
+        git 'https://github.com/devopsproject7/harikammana_prj.git'
 
-        //Get maven path
-        def mvnHome= tool name: 'maven-3', type: 'maven'
-        sh "${mvnHome}/bin/mvn package"
 
     }
+        stage('Compile and package'){
 
+
+            def mvnHOME = tool name: 'maven-3', type: 'maven'
+            echo " Welcome to ${mvnHOME}"
+            sh "${mvnHOME}/bin/mvn package "
+
+    }
+   
 }
-
 
 $$$$$$$$$$$$$$$$$$$$$$$$           1111111
 ---->1743110-11 - Jenkins Pipeline Email Notifications 
+: 11
 
+Configure syatem---> smtp details, port, creds
 gmail smtp settings
+
+pp syntax--->  mail:Mail
+
 
 
 https://stackoverflow.com/questions/18778240/solve-error-javax-mail-authenticationfailedexception
@@ -191,12 +206,35 @@ Now there are two scenarios If you are developing it in your local machine login
 If you have deployed the application onto a server then after the first request you will get an authentication error, so you have to give access to the server, just go here to give access- https://www.google.com/accounts/DisplayUnlockCaptcha
 
 
+node{
+    stage('SCM Checkout'){
+        git 'https://github.com/devopsproject7/harikammana_prj.git'
+
+
+    }
+        stage('Compile and package'){
+
+
+            def mvnHOME = tool name: 'maven-3', type: 'maven'
+             echo "Welcome to ${mvnHOME}"
+
+            sh "${mvnHOME}/bin/mvn package "
+
+    }
+    stage("Email notification"){
+         mail bcc: '', body: 'Hello', cc: '', from: '', replyTo: '', subject: 'Hello1', to: 'devopsvid07@gmail.com'
+
+    }
+   
+}
+
+
 $$$$$$$$$$$$$$$$$$$$$$$$ 121212
 
 ---> slack
 
 
-
+: 12
 ##Install Slack notification plugin
 ##SlackSend --->>> pp syntax
 
@@ -205,17 +243,40 @@ Webhook URL
 https://hooks.slack.com/services/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
  
 
-	Webhook URL  https://hooks.slack.com/services/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
+    
  	Channel	#proj-devops
  	Message	 Welcome to Jenkins
  	Color	good
     Override url	 https://hooks.slack.com/services/
     creds---> secret with text ---> T01LZ7F6PQC/B01LT2YFM8A/RpctibXJs3DXtbpHM1Br26vR
     
-    
-    
+ 
+node{
+    stage('SCM Checkout'){
+        git 'https://github.com/devopsproject7/harikammana_prj.git'
 
 
+    }
+        stage('Compile and package'){
+
+
+            def mvnHOME = tool name: 'maven-3', type: 'maven'
+             echo "Welcome to ${mvnHOME}"
+
+            sh "${mvnHOME}/bin/mvn package "
+
+    }
+    stage("Email notification"){
+         mail bcc: '', body: 'Hello', cc: '', from: '', replyTo: '', subject: 'Hello1', to: 'devopsvid07@gmail.com'
+
+    }
+   stage('Slack notification'){
+       slackSend baseUrl: 'https://hooks.slack.com/services/', channel: '#devopsprj_notify', color: 'good', message: 'started ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)', tokenCredentialId: 'SlackDemo'
+   }
+} 
+    
+
+: 13
 $$$$$$$$$$$$$$$$$$$$$$$$       131313
 
 ---->1743110-13 - Parametrizing Jenkins Jobs 
@@ -225,22 +286,28 @@ $$$$$$$$$$$$$$$$$$$$$$$$       131313
 # ################################################By parameterizing jenkins free-style jobs, gives option to pass different parameters to SAME JOB, and can re-user them
 
 
-properties([parameters([choice(choices: ['master', 'dev', 'yessss'], description: 'branch to build', name: 'branch1')])])
+properties([parameters([choice(choices: ['master', 'hello', 'feature-1'], description: '''master
+hello
+feature-1''', name: 'branch')])])
 
 node{
-    stage('SCM checkout'){
-        echo "Pulling changes from branch  ${params.branch1}"
-        git branch: "${params.branch1}", url: 'https://github.com/devopsproject7/harikammana_prj.git'
+stage("scm"){
+    echo "pull branch  ${params.branch}"
+    git branch: "${params.branch}", url: 'https://github.com/devopsproject7/harikammana_prj.git'
+}
 
-    }
-}    
+}
+  
 
+: 14
 $$$$$$$$$$$$$$$$$$$$$$$$        1414444
 Sonarqube
 
+: 15
 $$$$$$$$$$$$$$$$$$$$$$$$          151515
 install Sonarqube
 
+: 16
 $$$$$$$$$$$$$$$$$$$$$$$$          161616
 ---->1743110-16 - Publish Source Code to SonarQube for Static Code Analysis 
 
@@ -390,25 +457,38 @@ $$$$$$$$$$$$$$$$$$$$$$$$     1919191
 
 1.) jenkins plugin: SSH Agent  ---> To copy war files to remote machines
 2.) PP script:     ssh agent
+3.) Jenkins creds---> ssh with private key ---> Add jenkins private key
 
 
 Note: |
     jenkins:
     ssh-key-gen
     ssh-copy-id root@tomcatserver
-    Jenkins creds---> ssh with private key ---> Add jenkins private key
     
-    
-    git checkout
-    build
-    package
-    Excute ssh agent
-    Copy war file to tomcat/webapps
-    Send slack notification
+on tomcat:  
+    sudo vim /etc/ssh/sshd_config 
+    sudo systemctl reload sshd
+    sudo passwd root
+  cd 
+  wget https://mirrors.estointernet.in/apache/tomcat/tomcat-8/v8.5.63/bin/apache-tomcat-8.5.63.tar.gz
+  tar -xvf apache-tomcat-8.5.63.tar.gz 
+  mv apache-tomcat-8.5.63 tomcat
+  sudo  yum install -y java-1.8*
+  mv apache-tomcat-8.5.63 tomcat
+  cd /home/ec2-user/tomcat/bin/
+  ls
+  ./startup.sh  start
 
 
-                            
-                            
+
+    
+    
+ #   git checkout
+  #  build
+  #  package
+  #  Excute ssh agent
+  #  Copy war file to tomcat/webapps
+  #  Send slack notification
 
 
 
@@ -437,10 +517,74 @@ node{
 
 }
 
-$$$$$$$$$$$$$$$$$$$$$$$$             202020202
+#########SEND BUILD ARTIFACTS OVER SSH
 
+node{
+    stage('SCM checkout'){
+      git 'https://github.com/devopsproject7/hello-world.git'
+    }
+    stage('Compile-package'){
+
+        //Get maven path
+        def mvnHome= tool name: 'maven-3', type: 'maven'
+        sh "${mvnHome}/bin/mvn package"
+    }
+     stage('Deploy to tomcat'){
+         sshPublisher(publishers: [sshPublisherDesc(configName: 'tomcat-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '/home/ec2-user/tomcat/webapps', remoteDirectorySDF: false, removePrefix: 'webapp/target/', sourceFiles: 'webapp/target/*.war')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true)])
+     }
+  
+   stage('Email notification'){
+             slackSend baseUrl: 'https://hooks.slack.com/services/', channel: '#devops', color: 'good', message: 'Welcome to Jenkins', tokenCredentialId: 'slack'
+             
+    }
+
+}
+
+
+$$$$$$$$$$$$$$$$$$$$$$$$             202020202
+: 20
 
 ---->1743110-20 - Introduction to Declarative Pipelines 
+
+
+node---> stages---> steps
+pipeleine--->  agent---> stages--> stage---> steps
+
+pipeline{
+    agent{
+        label "node"
+    }
+    stages{
+        stage("A"){
+            steps{
+                echo "========executing A========"
+            }
+            post{
+                always{
+                    echo "========always========"
+                }
+                success{
+                    echo "========A executed successfully========"
+                }
+                failure{
+                    echo "========A execution failed========"
+                }
+            }
+        }
+    }
+    post{
+        always{
+            echo "========always========"
+        }
+        success{
+            echo "========pipeline executed successfully ========"
+        }
+        failure{
+            echo "========pipeline execution failed========"
+        }
+    }
+}
+
 
 pipeline {
     agent none 
@@ -478,6 +622,8 @@ pipeline {
 
 $$$$$$$$$$$$$$$$$$$$$$$$        212121
 
+
+: 21
 ---->1743110-21 - Integrating Declarative Pipelines using Git
 
 
