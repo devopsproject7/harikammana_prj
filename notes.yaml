@@ -452,7 +452,7 @@ node {
 
             
 $$$$$$$$$$$$$$$$$$$$$$$$     1919191
-
+: 19
 ###############1743110-19 - Deploy War File to Tomcat  
 
 1.) jenkins plugin: SSH Agent  ---> To copy war files to remote machines
@@ -627,7 +627,7 @@ $$$$$$$$$$$$$$$$$$$$$$$$        212121
 ---->1743110-21 - Integrating Declarative Pipelines using Git
 
 
-Declarative pipeline script incline in this case. 
+Declarative pipeline script inline in this case. 
 
 pipeline {
     agent any  
@@ -650,6 +650,35 @@ Note: |
 $$$$$$$$$$$$$$$$$$$$$$$$   2222222222
 1743110-22 - Using maven builds in Declarative Pipelines 
  
+
+pipeline{
+   agent any
+   environment{
+       def mvnHOME = tool name: 'maven-3', type: 'maven'  
+   }
+   stages{
+    stage("SCM checkout "){
+        steps{
+            echo "Hello world!!"
+            git branch: 'master', url: 'https://github.com/devopsproject7/harikammana_prj.git'
+        }
+    }
+    stage("maven build"){
+        steps{
+            sh 'echo $PATH'
+            sh '${mvnHOME}/bin/mvn clean package'
+
+        }
+    }
+
+
+
+
+   }
+}
+
+
+
 
 
 pipeline {
@@ -684,11 +713,511 @@ Add maven to path
 $$$$$$$$$$$$$$$$$$$$$$$$ 23232323
 
 ------->1743110-23 - Deploy War file to Tomcat - Declarative Pipelines -
+: 23
+
+
 
 Simple CI/CD process using Declarative Pipeline:
 
  : |
   PP have 3stages:  Source----> Build,package ---> Deploy
+ 
+ pipeline{
+   agent any
+   environment{
+       def mvnHOME = tool name: 'maven-3', type: 'maven'  
+   }
+   triggers {
+    pollSCM '*/1 * * * *'
+   }
+
+
+   stages{
+    stage("SCM checkout "){
+        steps{
+            git branch: 'master', url: 'https://github.com/devopsproject7/hello-world.git'
+        }
+    }
+    stage("maven build"){
+        steps{
+            sh 'echo $PATH'
+            sh '${mvnHOME}/bin/mvn clean package'
+
+        }
+    }
+    stage('Deploy to Tomcat'){
+        steps{
+           sshPublisher(publishers: [sshPublisherDesc(configName: 'tomcat-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '//home/ec2-user/tomcat/webapps', remoteDirectorySDF: false, removePrefix: 'webapp/target/', sourceFiles: 'webapp/target/*.war')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true)])
+
+        }
+    }
+
+
+
+
+   }
+}
+ 
+ 
+: 24
+1743110-24 - Display custom build names using Declarative Pipelines 
+ 
+ 
+ currentBuild.displayName = "devops-project-#"+currentBuild.number
+
+pipeline{
+   agent any
+   environment{
+       def mvnHOME = tool name: 'maven-3', type: 'maven'  
+   }
+   triggers {
+    pollSCM '*/1 * * * *'
+   }
+
+
+   stages{
+    stage("SCM checkout "){
+        steps{
+            git branch: 'master', url: 'https://github.com/devopsproject7/hello-world.git'
+        }
+    }
+    stage("maven build"){
+        steps{
+            sh 'echo $PATH'
+            sh '${mvnHOME}/bin/mvn clean package'
+
+        }
+    }
+    stage('Deploy to Tomcat'){
+        steps{
+           sshPublisher(publishers: [sshPublisherDesc(configName: 'tomcat-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '//home/ec2-user/tomcat/webapps', remoteDirectorySDF: false, removePrefix: 'webapp/target/', sourceFiles: 'webapp/target/*.war')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true)])
+
+        }
+    }
+
+
+
+
+   }
+}
+
+
+: 25
+k8s intro
+: 26
+k8s setup kops
+: 27
+1743110-27 - Kubernetes - Build CI CD Pipelines 
+
+ 
+pipeline {
+    agent any
+    stages{
+        stage("SCM checkout"){
+            steps{
+                echo "Hello world!!"
+               git branch: 'master', url: 'https://github.com/devopsproject7/node-app.git'
+                
+            }
+        }
+        stage('Build Docker Image'){
+            steps{
+                script{
+                    def DOCKER_TAG = getDockerTag()
+                    echo "hello tag is: ${DOCKER_TAG} "
+                    sh "docker build . -t devopsharish/nodeapp:${DOCKER_TAG}"
+                    sh "whoami"
+                    sh "docker ps"
+                }
+                
+            }
+
+        }
+    }
+}
+
+def getDockerTag(){
+    def commit =  sh script: 'git rev-parse HEAD', returnStdout: true
+    return commit
+}
+
+
+
+
+ 
+ 
+ 
+ pipeline {
+    agent any
+    environment{
+        DOCKER_TAG = getDockerTag()
+    }
+    stages{
+        stage("SCM checkout"){
+            steps{
+                echo "Hello world!!"
+               git branch: 'master', url: 'https://github.com/devopsproject7/node-app.git'
+                
+            }
+        }
+        stage('Build Docker Image'){
+            steps{
+                script{
+                    echo "hello tag is: ${DOCKER_TAG} "
+                    sh "docker build . -t devopsharish/nodeapp:${DOCKER_TAG}"
+                    sh "whoami"
+                    sh "docker images"
+                }
+                
+            }
+
+        }
+        stage("Dockerhub push"){
+            steps{
+                withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubPwd')]) {
+
+                sh "docker login -u devopsharish -p  ${dockerhubPwd}"
+                sh "docker push devopsharish/nodeapp:${DOCKER_TAG}"
+            }
+        }
+    }
+}
+}
+
+def getDockerTag(){
+    def commit =  sh script: 'git rev-parse HEAD', returnStdout: true
+    return commit
+}
+ 
+ 
+ 
+pipeline {
+    agent any
+    stages{
+        stage('Build Docker Image'){
+            steps{
+                script{
+                    def tag = latestCommitHash()
+                    sh "docker build . -t kammana/nodeapp:${tag} "
+                }
+                
+            }
+
+        }
+        stage('Push DockerHub'){
+            steps{
+                withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPwd')]) {
+                    sh "docker login -u kammana -p ${dockerHubPwd}"
+                    script{
+                        def tag = latestCommitHash()
+                        sh """
+                            docker push kammana/nodeapp:${tag}
+                            chmod +x changeTag.sh
+                            ./changeTag.sh ${tag}
+                        """
+                    }
+                }
+            }
+        }
+        stage('Deploy - Kubernetes'){
+            steps{
+                sshagent(['kops-k8s']) {
+                    sh """ 
+                       scp -o StrictHostKeyChecking=no services.yml node-app-pod.yml ec2-user@52.66.70.61:/home/ec2-user/
+                       
+                    """
+                    script{
+                        try{
+                            sh "ssh ec2-user@52.66.70.61 kubectl apply -f ."
+                        }catch(error){
+                            sh "ssh ec2-user@52.66.70.61 kubectl create -f ."
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+def latestCommitHash(){
+    def commit =  sh returnStdout: true, script: 'git rev-parse HEAD'
+    return commit
+}
+
+
+##############################################################################################################
+###############################################################################################################
+###############################################################################################################
+
+
+: |
+   CI CD Of Docker Containers DevOps Jenkins Pipeline Tutorial Docker CI CD DevOps CI CD
+   SCM checkout
+   build
+    create docker image
+    upload to dockerhub
+    Using Ansible  Deploy container 
+
+
+Check:
+1.) git 
+2.) maven /opt/apache-maven-3.6.3/bin
+    If Installed Auto(global tool config): /var/lib/jenkins/tools ---> hudson.tasks.Maven_Maveninstallation
+
+3.) ansible: To execute playbooks  for deployig containers to dev server(we do from jenkins)   
+    sudo amazon-linux-extras install ansible2
+  
+   ansible --version
+  ansible 2.9.13
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible
+ ### executable location = /bin/ansible ---> We need this path, because  we are installing ansible plugin in jenkins, where we need to provide this path
+ 
+  plugin: ansible
+  Global tool config:  Name: ansible
+                       path: /bin   ##Note: We should only provide path to executable only for all
+----> Where executbale is present
+
+4.) install docker
+usermod -aG docker jenkins  
+ restart jenkins
+
+                       
+pp syntax :
+
+git
+maven: tools
+docker image function last commit :  a.)   sh: shell script 
+
+      def getVersion(){
+         def commitHash = sh label: '`get last commit', returnStdout: true, script: 'git rev-parse --short HEAD'
+          return commitHash
+    }
+
+                                    b.)   In declarative: environment
+docker push  : withCredentials                                   
+ansible :   ansible playbook invoke playbook                    
+--------->  important: How we are passing DOCKER_TAG commit id for playbook
+
+:1
+
+pipeline{
+    agent any
+    tools {
+      maven 'maven3'    //maven added to PATH
+    }
+
+    stages{
+      stage("SCM Checkout "){
+          steps{
+              echo "====++++SCM Checkout++++===="
+
+              git branch: 'master', 
+              url: 'https://github.com/devopsproject7/dockeransiblejenkins.git'
+          }
+        }
+        stage("Maven build"){
+            steps{
+                echo "====++++maven build ++++===="
+                sh "mvn clean package"
+            }
+           
+        }
+      }
+    }
+
+----> output    war file generated
+[[1;34mINFO[m] Building war: /var/lib/jenkins/workspace/pp1/target/dockeransible.war
+
+   
+: 2 
+Build docker image
+
+
+ git rev-parse
+ git rev-parse HEAD
+027cb3026e01eca204c06f2b94e2a599785e29c6
+ s
+ git rev-parse HEAD --short
+027cb3026e01eca204c06f2b94e2a599785e29c6
+fatal: Needed a single revision
+
+ git rev-parse --short HEAD
+027cb30
+  
+pipeline{
+    agent any
+    tools {
+      maven 'maven3'
+    }
+    environment {
+      DOCKER_TAG = getVersion()
+    }
+    stages{
+        stage('SCM'){
+            steps{
+                git branch: 'master', 
+              url: 'https://github.com/devopsproject7/node-app.git'
+            }
+        }
+        
+       // stage('Maven Build'){
+       //     steps{
+       //         sh "mvn clean package"
+       //     }
+       //  }
+        
+        stage('Docker Build'){
+            steps{
+                sh "docker build . -t devopsharish/hariapp:${DOCKER_TAG} "
+            }
+        }
+
+
+       stage("Dockerhub push"){
+        steps{
+            withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerHubPWD')]) {
+            sh "docker login -u devopsharish -p ${dockerHubPWD}"
+             sh "docker push devopsharish/hariapp:${DOCKER_TAG} "
+        }
+            
+        }
+
+       }
+    }
+}
+
+def getVersion(){
+    def commitHash = sh label: '', returnStdout: true, script: 'git rev-parse --short HEAD'
+    return commitHash
+}
+
+
+: 3
+
+Write Ansible pb to deploy container on dev server
+
+
+
+
+pipeline{
+    agent any
+    tools {
+      maven 'maven3'
+    }
+    environment {
+      DOCKER_TAG = getVersion()
+    }
+    stages{
+        stage('SCM'){
+            steps{
+                git branch: 'master', 
+              url: 'https://github.com/devopsproject7/node-app.git'
+            }
+        }
+        
+       // stage('Maven Build'){
+       //     steps{
+       //         sh "mvn clean package"
+       //     }
+       //  }
+        
+        stage('Docker Build'){
+            steps{
+                sh "docker build . -t devopsharish/hariapp:${DOCKER_TAG} "
+            }
+        }
+
+
+       stage("Dockerhub push"){
+        steps{
+            withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerHubPWD')]) {
+            sh "docker login -u devopsharish -p ${dockerHubPWD}"
+             sh "docker push devopsharish/hariapp:${DOCKER_TAG} "
+        }
+            
+        }
+
+       }
+
+       
+       
+        stage('Docker Deploy '){
+            steps{
+ansiblePlaybook credentialsId: 'ec2-user', disableHostKeyChecking: true, extras: "-e DOCKER_TAG=${DOCKER_TAG}", installation: 'ansible', inventory: 'inventory', playbook: 'deploy-docker.yml'
+            }
+        }
+
+    }
+}
+
+def getVersion(){
+    def commitHash = sh label: '', returnStdout: true, script: 'git rev-parse --short HEAD'
+    return commitHash
+}
+
+
+---
+- hosts: dev
+  become: true
+  tasks:
+  - name: instal;l python pip 
+    yum: 
+      name: python-pip 
+      state: present
+  - name: Install Docker
+    yum: 
+      name: docker 
+      state: present 
+  - name: start docker 
+    service:
+     name: docker 
+     state: started 
+     enabled: yes 
+  - name: Install docker-py python module
+    pip:
+     name: docker-py
+     state: present
+  - name: start container
+    docker_container:
+     name: hariapp 
+     image: "devopsharish/hariapp:{{DOCKER_TAG}}"  
+     state: started
+     published_ports: 
+     - 0.0.0.0:8080:8080
+     
+[dev]
+172.31.86.45 ansible_user=root 
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
  
  

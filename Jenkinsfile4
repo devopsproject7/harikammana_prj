@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+    environment{
+        DOCKER_TAG = getDockerTag()
+    }
+    stages{
+        stage("SCM checkout"){
+            steps{
+                echo "Hello world!!"
+               git branch: 'master', url: 'https://github.com/devopsproject7/node-app.git'
+                
+            }
+        }
+        stage('Build Docker Image'){
+            steps{
+                script{
+                    echo "hello tag is: ${DOCKER_TAG} "
+                    sh "docker build . -t devopsharish/nodeapp:${DOCKER_TAG}"
+                    sh "whoami"
+                    sh "docker images"
+                }
+                
+            }
+
+        }
+        stage("Dockerhub push"){
+            steps{
+                withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubPwd')]) {
+
+                sh "docker login -u devopsharish -p  ${dockerhubPwd}"
+                sh "docker push devopsharish/nodeapp:${DOCKER_TAG}"
+            }
+        }
+    }
+        stage("Deploy to k8s"){
+            steps{
+                sh "chmod 777 changeTag.sh"
+                sh "./changeTag.sh ${DOCKER_TAG}"
+
+            }
+        }
+
+
+
+
+
+
+}
+}
+
+def getDockerTag(){
+    def commit =  sh script: 'git rev-parse HEAD', returnStdout: true
+    return commit
+}
